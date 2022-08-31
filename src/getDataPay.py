@@ -30,7 +30,7 @@ dirFiles = os.listdir(files) # list files in route
 DATA_FILES_PDF =  []    # list to save data in files PDF
 
 # name of columns to get data 
-columnas = ['MONTO A PAGAR','MONTO TOTAL','FECHA FINAL','TOTAL PAGOS','NO CREDITO','NOMBRE']
+columnas = ['TOTAL PAGOS','MONTO A PAGAR','MONTO TOTAL','FECHA FINAL' ,'NO CREDITO','NOMBRE']
 DATA_FILES_PDF.append(columnas)
 
 # name of variables to get  
@@ -112,8 +112,8 @@ for fichero in dirFiles: # each file to do
         # number of credit and name
         NO_CREDITO = credito 
 
-        data_in_file = [str(MONTO_A_PAGAR).replace(',',''), str(MONTO_TOTAL).replace(',',''), FECHA_FINAL, TOTAL_PAGOS, NO_CREDITO, NOMBRE]
+        data_in_file = [TOTAL_PAGOS, str(MONTO_A_PAGAR).replace(',',''), str(MONTO_TOTAL).replace(',',''), FECHA_FINAL, NO_CREDITO, NOMBRE]
         DATA_FILES_PDF.append(data_in_file)
 
 # save data in file CSV
-np.savetxt("C:\\Files_Manager_Finsus\\outputs\\DataFilesPayPDF.csv", DATA_FILES_PDF, delimiter =",",fmt ='% s')
+np.savetxt("C:\\Files_Manager_Finsus\\outputs\\DataFilesPayPDF_{}.csv".format(MONTO_A_PAGAR), DATA_FILES_PDF, delimiter =",",fmt ='% s')

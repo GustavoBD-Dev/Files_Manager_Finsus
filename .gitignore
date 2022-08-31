@@ -1,2 +1,4 @@
-outputs/DataFilesPayPDF.csv
-inputs/BURGOS CASTELLANOS BEATRIZ 1-5300-231 14500.pdf
+outputs/**
+inputs/**
+carga_1.txt
+vin_carga1.txt
