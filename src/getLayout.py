@@ -37,12 +37,7 @@ def buildLayout(listOne, listTwo, listThird, listFour):
     print(listTwo)
     print(listThird)
     print(listFour)
-    
-    layoutComplete = []
 
-    head = ["vin1", "nombre", "referencia", "cliente", "idrol", "credito", "saldo_insoluto", "saldo_insoluto_formato", "tipo_proceso","empresa", "direccion_completa", "telefono_fijo", "email", "celular", "fechaape", "plazo", "mensualidad",
-            "bullet", "fecha_vencimiento", "cuenta_2001", "lugarnacimiento", "sexo", "rfc", "curp", "ocupacion", "fechanacimiento", "ruta", "edad", "vin", "modelo", "marca", "motor", "descripcion", "color", "cat", "saldo_insoluto_texto"]
-    layoutComplete.append(head)
     body = []
 
     # vin1
@@ -76,13 +71,13 @@ def buildLayout(listOne, listTwo, listThird, listFour):
     # fechaape
     body.append(listOne[13])
     # plazo
-    body.append(listFour[3])
-    # mensualidad
     body.append(listFour[0])
-    # bullet
+    # mensualidad
     body.append(listFour[1])
-    # fecha_vencimiento
+    # bullet
     body.append(listFour[2])
+    # fecha_vencimiento
+    body.append(listFour[3])
     # cuenta_2001
     body.append(listThird[3])
     # lugarnacimiento
@@ -118,8 +113,11 @@ def buildLayout(listOne, listTwo, listThird, listFour):
     # saldo_insoluto_texto
     body.append(listOne[22])
 
-    layoutComplete.append(body)
-    return layoutComplete
+    return body
+
+def saveLayoutInCSV(layout):
+    import numpy as np 
+    np.savetxt("C:\Files_Manager_Finsus\outputs\info.csv", layout, delimiter =",",fmt ='% s')
 
 if __name__ == "__main__":
     firstTable = getTableFile_txt("carga_1.txt")
@@ -148,6 +146,12 @@ if __name__ == "__main__":
     listThird = None
     listFour = None
 
+    layoutComplete = []
+
+    head = ["vin1", "nombre", "referencia", "cliente", "idrol", "credito", "saldo_insoluto", "saldo_insoluto_formato", "tipo_proceso","empresa", "direccion_completa", "telefono_fijo", "email", "celular", "fechaape", "plazo", "mensualidad",
+            "bullet", "fecha_vencimiento", "cuenta_2001", "lugarnacimiento", "sexo", "rfc", "curp", "ocupacion", "fechanacimiento", "ruta", "edad", "vin", "modelo", "marca", "motor", "descripcion", "color", "cat", "saldo_insoluto_texto"]
+    layoutComplete.append(head)
+
     # delete the first row, contains the name of columns
     thirdTable.pop(0)
     # iterate to third table, all values
@@ -172,18 +176,17 @@ if __name__ == "__main__":
                 listTwo = secondTabe[vin]
 
         # get data in the four table
-        # find the ro that contains the value (numer of credit)
+        # find the ro that contains the value (number of credit)
         for credit in range(len(fourTable)):
             if fourTable[credit][4] == thirdTable[element][0]:
                 # print(fourTable[credit])
                 listFour = fourTable[credit]
 
-    # built layout with the data in lists
-    layout = buildLayout(listOne, listTwo, listThird, listFour)
+        # built layout with the data in lists
+        layoutComplete.append(buildLayout(listOne, listTwo, listThird, listFour))
+
     print('\n\n')
-    print(layout)
+    print(layoutComplete)
+    saveLayoutInCSV(layoutComplete)
 
-
-
-
-
+    
