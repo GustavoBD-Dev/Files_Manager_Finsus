@@ -18,6 +18,7 @@ import math
 
 def getDataPay():
 
+    # directory of template file Word
     convenioPV = DocxTemplate("layouts/CONVENIO MODIFICATORIO_ARRENDAMIENTO PV_SUBSISTE SEGURO DE VIDA.docx") 
 
     files = "C:\\GeneracionContratos\\inputs_PV\\" # route to find files PDF
@@ -49,14 +50,16 @@ def getDataPay():
             end_name = text.find('"Suscriptor"')
             NOMBRE = text[start_name+13: end_name] 
 
+            # find amount 
             start_amount = text.find('"Beneficiario"')
             end_amount = text.find('60/100')
             AMOUNT = text[start_amount+16: end_amount+6] 
 
+            # find number of months
             start_months = text.find('durante')
             end_months = text.find('sucesivas')
             MONTHS_TEXT = text[start_months+12: end_months-7] 
-
+            # get number of months in text
             MONTHS_NUMBER = text[start_months+8: start_months+10] 
 
             if(index < 0):
@@ -89,6 +92,7 @@ def getDataPay():
             # get month pay
             months =  re.split("\\n| ", df_out[2][1])
 
+            # generate table with the list 
             table_data = []
             table_data.append(pay)
             table_data.append(dates)
@@ -96,6 +100,7 @@ def getDataPay():
 
             partial_income_table = []
 
+            # build the data matrix, list of lists
             for i in range(len(table_data[0])):
                     aux = []
                     aux.append(table_data[0][i])
@@ -109,13 +114,15 @@ def getDataPay():
             print(MONTHS_NUMBER)
             print(MONTHS_TEXT)
 
-            dataValues = []
-
+            dataValues = [] # list of dictionaries 
+            
+            # iterate the matrix of values
             for row in partial_income_table:
-                aux_dic = {}
-                aux_dic['cols'] = row
-                dataValues.append(aux_dic)
+                aux_dic = {}                # crate the dictionary
+                aux_dic['cols'] = row       # add value 'list' with the key 
+                dataValues.append(aux_dic)  # add dictionary in the list
 
+            # build context with data of the PDF
             context = {
                 'nombre' : NOMBRE,
                 'monto'  : '$ {}'.format(AMOUNT),
@@ -125,11 +132,11 @@ def getDataPay():
                 'tbl_data' : dataValues
             }
 
+            # generate the files Word with the data file PDF (table and other variables)
             fileDir = 'contratos/'
-            #convenioPV.render(context)
-            #convenioPV.save(fileDir+"/_(PRUEBA)_CONVENIO MODIFICATORIO_ARRENDAMIENTO PV_SUBSISTE SEGURO DE VIDA "+str(NAME)+".docx")
+            convenioPV.render(context)
+            convenioPV.save(fileDir+"/_(PRUEBA)_CONVENIO MODIFICATORIO_ARRENDAMIENTO PV_SUBSISTE SEGURO DE VIDA "+str(NAME)+".docx")
             
 
 if __name__ == '__main__' :
-    #getDataPay(str(sys.argv[1]),str(sys.argv[2]))
     getDataPay()
