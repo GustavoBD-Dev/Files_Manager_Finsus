@@ -1,4 +1,8 @@
 
+from ast import Try
+from tkinter.messagebox import NO
+
+
 def getTableFile_txt(fileName):
     # get file in directory
     file = open(fileName, "r", encoding='utf-8')
@@ -55,13 +59,13 @@ def buildLayout(listOne, listTwo, listThird, listFour):
     # saldo_insoluto
     body.append(listOne[5])
     # saldo_insoluto_formato
-    body.append(listOne[6])
+    body.append('"{}"'.format(listOne[6])) ######
     # tipo_proceso
     body.append(listOne[7])
     # empresa
     body.append(listOne[8])
     # direccion_completa
-    body.append(listOne[9])
+    body.append('"{}"'.format(str(listOne[9]))) ##
     # telefono_fijo
     body.append(listOne[10])
     # email
@@ -93,7 +97,7 @@ def buildLayout(listOne, listTwo, listThird, listFour):
     # fechanacimiento
     body.append(listOne[19])
     # ruta
-    body.append(listOne[20])
+    body.append('"{}"'.format(str(listOne[20])))
     # edad
     body.append(listOne[21])
     # vin
@@ -117,17 +121,17 @@ def buildLayout(listOne, listTwo, listThird, listFour):
 
 def saveLayoutInCSV(layout):
     import numpy as np 
-    np.savetxt("C:\Files_Manager_Finsus\outputs\info.csv", layout, delimiter =",",fmt ='% s')
+    np.savetxt("C:\Files_Manager_Finsus\outputs\info_error.csv", layout, delimiter =",",fmt ='% s', format="utf-8")
 
 if __name__ == "__main__":
-    firstTable = getTableFile_txt("carga_1.txt")
-    secondTabe = getTableFile_txt("vin_carga_1.txt")
-    thirdTable = getTableFile_csv("layout_contract.csv")
-    fourTable = getTableFile_csv("C:\Files_Manager_Finsus\outputs\DataFilesPayPDF_14500.csv")
+    firstTable = getTableFile_txt("src\\data\\datos_hilda.txt")
+    secondTabe = getTableFile_txt("src\\data\\vin_datos_hilda.txt")
+    thirdTable = getTableFile_csv("src\\layout_contract.csv")
+    fourTable = getTableFile_csv("C:\\Files_Manager_Finsus\\outputs\\DataFilesPayPDF_ALETTIA.csv")
 
-    """
+    
     # print the values of list
-    print(firstTable)
+    """print(firstTable)
     print('\n\n')
     print(secondTabe)
     print('\n\n')
@@ -138,13 +142,7 @@ if __name__ == "__main__":
     print(firstTable[0][4]) # key -> number of credit
     print(secondTabe[0][0]) # key -> value of vin
     print(thirdTable[0][0]) # 
-    print(fourTable[0][4])  # key -> number of credit
-    """
-
-    listOne = None
-    listTwo = None
-    listThird = None
-    listFour = None
+    print(fourTable[0][4])  # key -> number of credit"""
 
     layoutComplete = []
 
@@ -154,39 +152,63 @@ if __name__ == "__main__":
 
     # delete the first row, contains the name of columns
     thirdTable.pop(0)
-    # iterate to third table, all values
-    for element in range(len(thirdTable)):
 
-        # print(thirdTable[element])
-        listThird = thirdTable[element]
+    try:
+        # iterate to third table, all values
+        for element in range(len(thirdTable)):
 
-        # get data in first table
-        # find the row that contanins the value (number of credit)
-        for credit in range(len(firstTable)):
-            # print(firstTable[credit][4], " >>>>>>>>>> ", thirdTable[element][0])
-            if firstTable[credit][4] == thirdTable[element][0]:
-                # print(firstTable[credit])
-                listOne = firstTable[credit]
+            listOne = None
+            listTwo = None
+            listThird = None
+            listFour = None
 
-        # get data in second table
-        # find the row that contains the value (vin)
-        for vin in range(len(secondTabe)):
-            if secondTabe[vin][0] == thirdTable[element][2]:
-                #print(secondTabe[vin])
-                listTwo = secondTabe[vin]
+            # print(thirdTable[element])
+            listThird = thirdTable[element]
 
-        # get data in the four table
-        # find the ro that contains the value (number of credit)
-        for credit in range(len(fourTable)):
-            if fourTable[credit][4] == thirdTable[element][0]:
-                # print(fourTable[credit])
-                listFour = fourTable[credit]
+            # get data in first table
+            # find the row that contanins the value (number of credit)
+            for credit in range(len(firstTable)):
+                # print(firstTable[credit][4], " >>>>>>>>>> ", thirdTable[element][0])
+                if firstTable[credit][4] == thirdTable[element][0]:
+                    # print(firstTable[credit])
+                    listOne = firstTable[credit]
 
-        # built layout with the data in lists
-        layoutComplete.append(buildLayout(listOne, listTwo, listThird, listFour))
+            # get data in second table
+            # find the row that contains the value (vin)
+            for vin in range(len(secondTabe)):
+                if secondTabe[vin][0] == thirdTable[element][2]:
+                    #print(secondTabe[vin])
+                    listTwo = secondTabe[vin]
 
-    print('\n\n')
-    print(layoutComplete)
-    saveLayoutInCSV(layoutComplete)
+            # get data in the four table
+            # find the ro that contains the value (number of credit)
+            for credit in range(len(fourTable)):
+                if fourTable[credit][4] == thirdTable[element][0]:
+                    print(fourTable[credit])
+                    listFour = fourTable[credit]
+
+            if listOne == None :
+                print(" NO SE ENCUENTRAN DATOS DE TABLA CREDITOS COMPLETOS !!!")
+                break
+            elif listTwo == None :
+                print(" NO SE ENCUENTRAN DATOS DE VIN COMPLETOS !!!")
+                break
+            elif listThird == None :
+                print(" REVISAR TABLA DE SOLICITUD")
+                break
+            elif listFour == None :
+                print("NO SE ENCUENTRAN DATOS DE PAGARÉS COMPLETOS")
+                break
+            else:
+                # built layout with the data in lists
+                layoutComplete.append(buildLayout(listOne, listTwo, listThird, listFour))
+
+        print('\n\n')
+        print(layoutComplete)
+        saveLayoutInCSV(layoutComplete)
+    except:
+        print('HA OCURRIDO UN ERROR')
+
+    
 
     

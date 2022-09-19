@@ -23,97 +23,113 @@ import re, os, camelot
 from PyPDF2 import PdfFileReader
 from pathlib import Path
 import numpy
+import sys
+from datetime import datetime
 
-files = "C:\\Files_Manager_Finsus\\inputs" # route to find files PDF
-dirFiles = os.listdir(files) # list files in route
+def getDataPay(directoryFilesInput, outputCSV):
 
-DATA_FILES_PDF =  []    # list to save data in files PDF
+    files = "C:\\Files_Manager_Finsus\\inputs" # route to find files PDF
+    dirFiles = os.listdir(files) # list files in route
 
-# name of columns to get data 
-columnas = ['TOTAL PAGOS','MONTO A PAGAR','MONTO TOTAL','FECHA FINAL' ,'NO CREDITO','NOMBRE']
-DATA_FILES_PDF.append(columnas)
+    DATA_FILES_PDF =  []    # list to save data in files PDF
 
-# name of variables to get  
-MONTO_A_PAGAR = None
-MONTO_TOTAL = None
-FECHA_FINAL = None
-TOTAL_PAGOS = None
-NO_CREDITO = None
-NOMBRE = None
+    # name of columns to get data 
+    columnas = ['TOTAL PAGOS','MONTO A PAGAR','MONTO TOTAL','FECHA FINAL' ,'NO CREDITO','NOMBRE']
+    DATA_FILES_PDF.append(columnas)
 
-# data frame
-dfs = []
+    # name of variables to get  
+    MONTO_A_PAGAR = None
+    MONTO_TOTAL = None
+    FECHA_FINAL = None
+    TOTAL_PAGOS = None
+    NO_CREDITO = None
+    NOMBRE = None
 
-producto_fin = ""
+    # data frame
+    dfs = []
 
-for fichero in dirFiles: # each file to do
+    producto_fin = ""
 
-    ficheropath = os.path.join(files, fichero) # complete route of file
-    filename = Path(ficheropath).stem
+    for fichero in dirFiles: # each file to do
 
-    if os.path.isfile(ficheropath) and (fichero.endswith('.pdf') or fichero.endswith('.PDF')):  # validate PDF
+        ficheropath = os.path.join(files, fichero) # complete route of file
+        filename = Path(ficheropath).stem
 
-        temp = open(os.path.join(files, fichero), 'rb')
-        PDF_read = PdfFileReader(temp)
-        first_page = PDF_read.getPage(0)
-        text = str(first_page.extractText()) # get text of file
+        if os.path.isfile(ficheropath) and (fichero.endswith('.pdf') or fichero.endswith('.PDF')):  # validate PDF
 
-        index = text.find("FINANCIERA SUSTENTABLE DE")  # reference to find credit 
+            temp = open(os.path.join(files, fichero), 'rb')
+            PDF_read = PdfFileReader(temp)
+            first_page = PDF_read.getPage(0)
+            text = str(first_page.extractText()) # get text of file
 
-        parts = text.split()
-        #for i in range(len(parts)):
-        #    print(i, ' - ', parts[i])
+            index = text.find("FINANCIERA SUSTENTABLE DE")  # reference to find credit 
 
-        # find name of document, betwen the words continuacion y "suscriptor"
-        start_name = text.find('Suscriptor')
-        end_name = text.find('Obligado')
-        NOMBRE = text[start_name+10: end_name-3]    
+            parts = text.split()
+            for i in range(len(parts)):
+                print(i, ' - ', parts[i])
 
-        if(index < 0):
-            index = text.find("POSIBILIDADES  VERDES  S.A")
+            # find name of document, betwen the words continuacion y "suscriptor"
+            start_name = text.find('Suscriptor')
+            end_name = text.find('Obligado')
+            NOMBRE = text[start_name+10: end_name-3] 
 
-        cc = text[index-30:index]
+            # find the amount
+            start_amount = text.find('"Beneﬁciario"')
+            end_amount = text.find('M.N.)')
+            AMOUNT = text[start_amount+10: end_amount+5]   
+            print(AMOUNT) 
 
-        index = cc.find("-")
-        cc = cc[index-1:-1]
+            if(index < 0):
+                index = text.find("POSIBILIDADES  VERDES  S.A")
 
-        index = cc.rfind("-")
-        index = cc.rfind("-", 0, index)
-        credito = cc[index-1:len(cc)]
-        cliente = cc[0:index-1]
-        print(credito + " & " + cliente + " & " + cc)
+            cc = text[index-30:index]
 
-        tables = camelot.read_pdf(os.path.join(files, fichero)) # find tables in PDF
+            index = cc.find("-")
+            cc = cc[index-1:-1]
 
-        df = tables[0].df # in the pays, the tables is in first page
-        df_out = pd.DataFrame(df)  
+            index = cc.rfind("-")
+            index = cc.rfind("-", 0, index)
+            credito = cc[index-1:len(cc)]
+            cliente = cc[0:index-1]
+            print(credito + " & " + cliente + " & " + cc)
 
-        # get index of latest element, this is the latest row 
-        END_DATA = 0
-        for i in range(len(df_out)):
-            #print(df_out[1][i])
-            if df_out[1][i].strip() == '':
-                END_DATA = i
-                #print(i)
-                break
+            tables = camelot.read_pdf(os.path.join(files, fichero)) # find tables in PDF
 
-        # the date latest is in latest row
-        FECHA_FINAL = df_out[1][END_DATA - 1]
+            df = tables[0].df # in the pays, the tables is in first page
+            df_out = pd.DataFrame(df)  
 
-        # total of elements
-        TOTAL_PAGOS = END_DATA - 1
+            # get index of latest element, this is the latest row 
+            END_DATA = 0
+            for i in range(len(df_out)):
+                #print(df_out[1][i])
+                if df_out[1][i].strip() == '':
+                    END_DATA = i
+                    #print(i)
+                    break
 
-        # amount to pay monthly
-        MONTO_A_PAGAR = df_out[9][1]
+            # the date latest is in latest row
+            FECHA_FINAL = df_out[1][END_DATA - 1]
 
-        # amount total
-        MONTO_TOTAL = df_out[9][END_DATA - 1]
+            # total of elements
+            TOTAL_PAGOS = END_DATA - 1
 
-        # number of credit and name
-        NO_CREDITO = credito 
+            # amount to pay monthly
+            MONTO_A_PAGAR = df_out[9][1]
 
-        data_in_file = [TOTAL_PAGOS, str(MONTO_A_PAGAR).replace(',',''), str(MONTO_TOTAL).replace(',',''), FECHA_FINAL, NO_CREDITO, NOMBRE]
-        DATA_FILES_PDF.append(data_in_file)
+            # amount total
+            MONTO_TOTAL = df_out[9][END_DATA - 1]
 
-# save data in file CSV
-np.savetxt("C:\\Files_Manager_Finsus\\outputs\\DataFilesPayPDF_{}.csv".format(MONTO_A_PAGAR), DATA_FILES_PDF, delimiter =",",fmt ='% s')
+            # number of credit and name
+            NO_CREDITO = credito 
+
+            data_in_file = [TOTAL_PAGOS, str(MONTO_A_PAGAR).replace(',',''), str(MONTO_TOTAL).replace(',',''), FECHA_FINAL, NO_CREDITO, NOMBRE, AMOUNT]
+            DATA_FILES_PDF.append(data_in_file)
+
+    # save data in file CSV
+    #np.savetxt("C:\\Files_Manager_Finsus\\outputs\\DataFilesPayPDF_AVALOS.csv", DATA_FILES_PDF, delimiter =",",fmt ='% s')
+    np.savetxt("C:\\GeneracionContratos\\outputs\\DataFilesPDF{}.csv".format(datetime.now()), DATA_FILES_PDF, delimiter =",",fmt ='% s')
+
+
+if __name__ == '__main__' :
+    #getDataPay(str(sys.argv[1]),str(sys.argv[2]))
+    getDataPay('c:\\Data\\pagares', 'c:\\Data\\outputs\\data.csv')
