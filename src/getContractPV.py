@@ -2,7 +2,6 @@ from datetime import date
 from itertools import count
 from lib2to3.pgen2.token import NAME
 from multiprocessing import context
-from tokenize import Double
 import pandas as pd
 import numpy as np
 import re, os, camelot
@@ -10,10 +9,9 @@ from PyPDF2 import PdfFileReader
 from pathlib import Path
 from distutils.dir_util import mkpath
 import os
-from pickle import FALSE  
 from docxtpl import DocxTemplate
 import pandas as pd
-import math
+from csv import reader
 
 
 def getDataPay():
@@ -23,6 +21,13 @@ def getDataPay():
 
     files = "C:\\GeneracionContratos\\inputs_PV\\" # route to find files PDF
     dirFiles = os.listdir(files) # list files in route
+
+    with open('C:\\Files_Manager_Finsus\\src\\dataPV.csv', 'r', encoding='utf-8') as csv_file:
+        csv_reader = reader(csv_file)
+        # Passing the cav_reader object to list() to get a list of lists
+        list_of_rows = list(csv_reader)
+        print(list_of_rows)
+
 
     # name of columns to get data 
     columnas = ['Pagos de Amortizacion','Fecha de Vencimiento','monto total a pagar']
@@ -37,13 +42,24 @@ def getDataPay():
             temp = open(os.path.join(files, fichero), 'rb')
             PDF_read = PdfFileReader(temp)
             first_page = PDF_read.getPage(0)
+            second_page = PDF_read.getPage(1)
             text = str(first_page.extractText()) # get text of file
+            text_2 = str(second_page.extractText()) # get text of file
 
             index = text.find("FINANCIERA SUSTENTABLE DE")  # reference to find credit 
 
             parts = text.split()
             for i in range(len(parts)):
                 print(i, ' - ', parts[i])
+
+            parts2 = text_2.split()
+            #for i in range(len(parts2)):
+            #    print(i, ' - ', parts2[i]) 
+
+            # fin the numer of client
+            start_nclient = text.find('M.N.)')
+            end_nclient = text.find('1-6')
+            N_CLIENT = text[start_nclient+5 : end_nclient]
 
             # find name of document, betwen the words continuacion y "suscriptor"
             start_name = text.find('continuación:')
@@ -81,7 +97,7 @@ def getDataPay():
             df = tables[0].df # in the pays, the tables is in first page
             df_out = pd.DataFrame(df)  
 
-            print(df_out)
+            #print(df_out)
 
             # get number of pay
             pay =  re.split("\\n| ", df_out[0][1])
@@ -113,6 +129,7 @@ def getDataPay():
             print(AMOUNT)
             print(MONTHS_NUMBER)
             print(MONTHS_TEXT)
+            print(N_CLIENT)
 
             dataValues = [] # list of dictionaries 
             
@@ -122,6 +139,17 @@ def getDataPay():
                 aux_dic['cols'] = row       # add value 'list' with the key 
                 dataValues.append(aux_dic)  # add dictionary in the list
 
+            # get data 'ANTECEDENTES'
+            DATE_HISTORICAL = '______'
+            CREDIT_HISTORICAL = '______'
+            for i in range(len(list_of_rows)):
+                for j in range(len(list_of_rows[i])):
+                    #print(list_of_rows[i][j], end=' ')
+                    if list_of_rows[i][2] == NOMBRE:
+                         DATE_HISTORICAL = list_of_rows[1]
+                         CREDIT_HISTORICAL = list_of_rows[0]
+                print()
+
             # build context with data of the PDF
             context = {
                 'nombre' : NOMBRE,
@@ -129,13 +157,15 @@ def getDataPay():
                 'plazo_texto'  : MONTHS_TEXT,
                 'plazo_numero'  : MONTHS_NUMBER,
                 'fecha'  : '01 de septiembre de 2022',
-                'tbl_data' : dataValues
+                'tbl_data' : dataValues,
+                'fecha_antecedentes': DATE_HISTORICAL,
+                'no_arrendamiento': CREDIT_HISTORICAL
             }
 
             # generate the files Word with the data file PDF (table and other variables)
             fileDir = 'contratos/'
             convenioPV.render(context)
-            convenioPV.save(fileDir+"/_(PRUEBA)_CONVENIO MODIFICATORIO_ARRENDAMIENTO PV_SUBSISTE SEGURO DE VIDA "+str(NAME)+".docx")
+            convenioPV.save(fileDir+"/PV_"+str(NOMBRE).strip()+"_"+str(credito)+"_"+str(cliente)+"_.docx")
             
 
 if __name__ == '__main__' :
