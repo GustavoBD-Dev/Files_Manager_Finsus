@@ -1,13 +1,15 @@
-from datetime import date
-from itertools import count
-from lib2to3.pgen2.token import NAME
+"""
+    This code generate contract PV, get data table of pay.
+    dataPV.csv
+    col[0]  : number of credit (antecedente)
+    col[1]  : date of pay (antecedente)
+"""
+
 from multiprocessing import context
 import pandas as pd
-import numpy as np
 import re, os, camelot
 from PyPDF2 import PdfFileReader
 from pathlib import Path
-from distutils.dir_util import mkpath
 import os
 from docxtpl import DocxTemplate
 import pandas as pd
@@ -26,11 +28,12 @@ def getDataPay():
         csv_reader = reader(csv_file)
         # Passing the cav_reader object to list() to get a list of lists
         list_of_rows = list(csv_reader)
-        print(list_of_rows)
+        #print(list_of_rows)
 
 
     # name of columns to get data 
-    columnas = ['Pagos de Amortizacion','Fecha de Vencimiento','monto total a pagar']
+    meses = ['','Enero', 'Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
+
 
     for fichero in dirFiles: # each file to do
 
@@ -49,8 +52,8 @@ def getDataPay():
             index = text.find("FINANCIERA SUSTENTABLE DE")  # reference to find credit 
 
             parts = text.split()
-            for i in range(len(parts)):
-                print(i, ' - ', parts[i])
+            #for i in range(len(parts)):
+            #    print(i, ' - ', parts[i])
 
             parts2 = text_2.split()
             #for i in range(len(parts2)):
@@ -68,8 +71,10 @@ def getDataPay():
 
             # find amount 
             start_amount = text.find('"Beneficiario"')
-            end_amount = text.find('60/100')
-            AMOUNT = text[start_amount+16: end_amount+6] 
+            end_amount = text.find('M.N.)')
+            #print(">>>>>>>>",start_amount)
+            #print(end_amount)
+            AMOUNT = text[start_amount+16: end_amount+5] 
 
             # find number of months
             start_months = text.find('durante')
@@ -124,12 +129,13 @@ def getDataPay():
                     aux.append(table_data[2][i])
                     partial_income_table.append(aux)
 
-            print(partial_income_table)
-            print(NOMBRE)
-            print(AMOUNT)
-            print(MONTHS_NUMBER)
-            print(MONTHS_TEXT)
-            print(N_CLIENT)
+            #print(partial_income_table)
+            #print(NOMBRE)
+            #print(AMOUNT)
+            #print(MONTHS_NUMBER)
+            #print(MONTHS_TEXT)
+            #print(N_CLIENT)
+            #print(credito)
 
             dataValues = [] # list of dictionaries 
             
@@ -145,27 +151,33 @@ def getDataPay():
             for i in range(len(list_of_rows)):
                 for j in range(len(list_of_rows[i])):
                     #print(list_of_rows[i][j], end=' ')
-                    if list_of_rows[i][2] == NOMBRE:
-                         DATE_HISTORICAL = list_of_rows[1]
-                         CREDIT_HISTORICAL = list_of_rows[0]
-                print()
+                    if list_of_rows[i][2] == credito:
+                        DATE_HISTORICAL = list_of_rows[i][1]
+                        CREDIT_HISTORICAL = list_of_rows[i][0]
+                #print()
 
-            # build context with data of the PDF
-            context = {
-                'nombre' : NOMBRE,
-                'monto'  : '$ {}'.format(AMOUNT),
-                'plazo_texto'  : MONTHS_TEXT,
-                'plazo_numero'  : MONTHS_NUMBER,
-                'fecha'  : '01 de septiembre de 2022',
-                'tbl_data' : dataValues,
-                'fecha_antecedentes': DATE_HISTORICAL,
-                'no_arrendamiento': CREDIT_HISTORICAL
-            }
+            if DATE_HISTORICAL == '______' or CREDIT_HISTORICAL == '______':
+                print(credito, ' NO CUENTA CON ANTECEDENTES')
+            else:
+                DATE_VALUES = DATE_HISTORICAL.split('/')
+                DATE_HISTORICAL = DATE_VALUES[0]+ ' de '+ meses[int(DATE_VALUES[1])]+' de '+ DATE_VALUES[2]
 
-            # generate the files Word with the data file PDF (table and other variables)
-            fileDir = 'contratos/'
-            convenioPV.render(context)
-            convenioPV.save(fileDir+"/PV_"+str(NOMBRE).strip()+"_"+str(credito)+"_"+str(cliente)+"_.docx")
+                 # build context with data of the PDF
+                context = {
+                    'nombre' : NOMBRE,
+                    'monto'  : '$ {}'.format(AMOUNT),
+                    'plazo_texto'  : MONTHS_TEXT,
+                    'plazo_numero'  : MONTHS_NUMBER,
+                    'fecha'  : '01 de septiembre de 2022',
+                    'tbl_data' : dataValues,
+                    'fecha_antecedentes': DATE_HISTORICAL,
+                    'no_arrendamiento': CREDIT_HISTORICAL
+                }
+
+                # generate the files Word with the data file PDF (table and other variables)
+                fileDir = 'contratos/'
+                convenioPV.render(context)
+                convenioPV.save(fileDir+"/PV_"+str(NOMBRE).strip()+"_"+str(credito)+"_"+str(cliente)+"_.docx")
             
 
 if __name__ == '__main__' :
