@@ -3,6 +3,7 @@
     dataPV.csv
     col[0]  : number of credit (antecedente)
     col[1]  : date of pay (antecedente)
+    col[2]  : number of credit (now)
 """
 
 from multiprocessing import context
