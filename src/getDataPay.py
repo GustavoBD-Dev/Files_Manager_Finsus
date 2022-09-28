@@ -123,4 +123,4 @@ for fichero in dirFiles: # each file to do
         DATA_FILES_PDF.append(data_in_file)
 
 # save data in file CSV
-np.savetxt("C:\\GeneracionContratos\\outputs\\DataPDF_21-09-2022_(3).csv", DATA_FILES_PDF, delimiter =",",fmt ='% s')
+np.savetxt("C:\\GeneracionContratos\\outputs\\DataPDF_28-09-2022.csv", DATA_FILES_PDF, delimiter =",",fmt ='% s')

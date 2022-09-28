@@ -22,7 +22,7 @@ def getDataPay():
     # directory of template file Word
     convenioPV = DocxTemplate("layouts/CONVENIO MODIFICATORIO_ARRENDAMIENTO PV_SUBSISTE SEGURO DE VIDA.docx") 
 
-    files = "C:\\GeneracionContratos\\inputs_PV\\" # route to find files PDF
+    files = "C:\\Files_Manager_Finsus\\inputs_PV\\" # route to find files PDF
     dirFiles = os.listdir(files) # list files in route
 
     with open('C:\\Files_Manager_Finsus\\src\\dataPV.csv', 'r', encoding='utf-8') as csv_file:

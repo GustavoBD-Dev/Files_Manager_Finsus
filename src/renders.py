@@ -1,5 +1,7 @@
+from cmath import isnan
 from distutils.dir_util import mkpath
-import glob
+from tkinter.messagebox import NO
+import numbers_to_letter
 import os, sys
 from pickle import FALSE  
 from docxtpl import DocxTemplate
@@ -35,6 +37,7 @@ for dt in carta.index:
   
   
   EnrutaMasConvenioModificatorio = DocxTemplate("layouts/2022 02 06 Paquete de Firmas Sin Telefono 2 MAS CONVENIO MODIFICATORIO.docx")
+  EnrutaMasConvenioModificatorioCartaCondonacion = DocxTemplate("layouts/2022 02 06 Paquete de Firmas Sin Telefono 2 MAS CONVENIO MODIFICATORIO - CARTA_CONDONACION.docx")
 
   fecha_text = carta['fechaape'][dt].split('/')
   fecha_nac = carta['fechanacimiento'][dt].split('/')
@@ -59,11 +62,12 @@ for dt in carta.index:
         'curp': carta['curp'][dt],
         'ocupacion': carta['ocupacion'][dt],
         'monto_max_formato': '{:,.2f}'.format(carta['mensualidad'][dt]),
+        #'monto_max_texto': carta['mensualidad_formato'][dt],
         'fecha_apertura_texto': fecha_text[0]+ ' de '+ meses[int(fecha_text[1])]+' de '+fecha_text[2],
         'motor' : carta['motor'][dt],
         'vin': carta['vin'][dt],
         'marca': carta['marca'][dt],
-        'modelo': carta['modelo'][dt],
+        'modelo': int(carta['modelo'][dt]),
         'modelo_formato': carta['modelo'][dt],
         'color': carta['color'][dt],
         'saldo_insoluto_formato': '{:,.2f}'.format(carta['saldo_insoluto_formato'][dt]),
@@ -84,9 +88,22 @@ for dt in carta.index:
         'bullet' : '{:,.2f}'.format(carta['bullet'][dt]),
         'correo' :carta['email'][dt],
         'descripcion_camioneta': carta['descripcion'][dt]+ ' Modelo ' +str(carta['modelo'][dt])+ ' con número de motor ' + carta['motor'][dt]+ ' VIN ' + carta['vin'][dt],
-        'rfc': carta['rfc'][dt]        
+        'rfc': carta['rfc'][dt]
+        #'condonacion_letra' :  carta['condonacion_formato'][dt]  
   }
   
+  if  str(carta['condonacion'][dt]) != "NO APLICA":
+    # AGREGAMOS VALORES DE CONDONACION
+    #print((numbers_to_letter.numero_a_letras(int(float(carta['condonacion'][dt]))).upper()).replace("(",''))
+    context['cond'] = str(float(carta['condonacion'][dt]))
+    context['cond_letra'] = "({} PESOS {}/100 M/N)".format(
+      #(numbers_to_letter.numero_a_letras(int(float(carta['condonacion'][dt]))).upper()).replace("(",''), 
+      numbers_to_letter.numero_a_letras(int(float(carta['condonacion'][dt]))).upper(),
+      str(carta['condonacion'][dt]).split('.')[1])
+    context['monto_max_texto'] = "({} PESOS 0/100 M/N)".format(numbers_to_letter.numero_a_letras(int(float(carta['mensualidad'][dt]))))
+
+
+
   nombreRuta = carta['ruta'][dt].replace("..","")
   for r in ('"', ".", "/","..","\""):
     nombreRuta = nombreRuta.replace(r, "")
@@ -145,9 +162,16 @@ for dt in carta.index:
 
   #enruta.render(context)
   #enruta.save(fileDir+"/En_Ruta"+str(carta['idrol'][dt])+"_"+carta['nombre'][dt]+"_"+carta['credito'][dt]+".docx")
-  
-  EnrutaMasConvenioModificatorio.render(context)
-  #EnrutaMasConvenioModificatorio.save(fileDir+"/En_Ruta"+str(carta['idrol'][dt])+"_"+carta['nombre'][dt]+"_"+"("+str(dt)+")"+"_"+carta['credito'][dt]+".docx")
-  EnrutaMasConvenioModificatorio.save(fileDir+"/"+str(carta['nombre'][dt]).strip()+"_"+str(carta['credito'][dt])+"_"+str(carta['vin'][dt])+"_"+str(carta['mensualidad'][dt])+".docx")
-  print("[" + str(dt) + "] >>> " + str(carta['nombre'][dt]).strip()+"_"+str(carta['credito'][dt])+"_"+str(carta['vin'][dt])+"_"+str(carta['mensualidad'][dt])+".docx")
+  #print(context)
+  if 'cond' in context:
+    #print(context['cond_letra'])
+    #print("Se agrega carta de condoniación")
+    EnrutaMasConvenioModificatorioCartaCondonacion.render(context)
+    EnrutaMasConvenioModificatorioCartaCondonacion.save(fileDir+"/"+str(carta['nombre'][dt]).strip()+"_"+str(carta['credito'][dt])+"_"+str(carta['vin'][dt])+"_"+str(carta['mensualidad'][dt])+".docx")
+    print("[" + str(dt) + "] >>> " + str(carta['nombre'][dt]).strip()+"_"+str(carta['credito'][dt])+"_"+str(carta['vin'][dt])+"_"+str(carta['mensualidad'][dt])+".docx")
+  else:
+    EnrutaMasConvenioModificatorio.render(context)
+    #EnrutaMasConvenioModificatorio.save(fileDir+"/En_Ruta"+str(carta['idrol'][dt])+"_"+carta['nombre'][dt]+"_"+"("+str(dt)+")"+"_"+carta['credito'][dt]+".docx")
+    EnrutaMasConvenioModificatorio.save(fileDir+"/"+str(carta['nombre'][dt]).strip()+"_"+str(carta['credito'][dt])+"_"+str(carta['vin'][dt])+"_"+str(carta['mensualidad'][dt])+".docx")
+    print("[" + str(dt) + "] >>> " + str(carta['nombre'][dt]).strip()+"_"+str(carta['credito'][dt])+"_"+str(carta['vin'][dt])+"_"+str(carta['mensualidad'][dt])+".docx")
 #EnrutaMasConvenioModificatorio.save("C:\\GeneracionContratos"+"/En_Ruta"+str(carta['idrol'][dt])+"_"+carta['nombre'][dt]+"_"+"("+str(dt)+")"+"_"+str(carta['credito'][dt])+".docx")
